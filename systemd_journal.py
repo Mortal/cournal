@@ -209,6 +209,12 @@ class JournalHandle:
         self._fp = jf.journal_file_close(self._fp)
         self._open = False
 
+    def __iter__(self):
+        e = self.next_entry()
+        while e is not None:
+            yield e
+            e = self.next_entry()
+
 
 def open_flags_to_sysflags(flags):
     return {'x+': O_RDWR | O_CREAT,
