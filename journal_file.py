@@ -837,7 +837,7 @@ struct_ObjectHeader._fields_ = [
     ('flags', c_uint8),
     ('reserved', c_uint8 * 6),
     ('size', le64_t),
-    ('payload', POINTER(c_uint8)),
+    ('payload', c_uint8 * 0),
 ]
 
 struct_DataObject.__slots__ = [
@@ -858,7 +858,7 @@ struct_DataObject._fields_ = [
     ('entry_offset', le64_t),
     ('entry_array_offset', le64_t),
     ('n_entries', le64_t),
-    ('payload', POINTER(c_uint8)),
+    ('payload', c_uint8 * 0),
 ]
 
 struct_FieldObject.__slots__ = [
@@ -873,7 +873,7 @@ struct_FieldObject._fields_ = [
     ('hash', le64_t),
     ('next_hash_offset', le64_t),
     ('head_data_offset', le64_t),
-    ('payload', POINTER(c_uint8)),
+    ('payload', c_uint8 * 0),
 ]
 
 struct_EntryItem.__slots__ = [
