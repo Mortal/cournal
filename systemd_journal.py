@@ -35,19 +35,38 @@ def make_iovec(s):
     return struct_iovec(cast(s.data, c_void_p), len(s))
 
 
-LazyEntryItemBase = collections.namedtuple(
-    'LazyEntryItem', '_journal offset hash')
-
-
 EntryBase = collections.namedtuple(
-    'Entry', 'object seqnum realtime monotonic boot_id xor_hash _items'.split())
-assert EntryObject.__slots__[:-1] == EntryBase._fields[:-1]
+    'Entry', 'object seqnum realtime monotonic boot_id xor_hash items'.split())
+assert EntryObject.__slots__ == EntryBase._fields
+
+
+FieldBase = collections.namedtuple(
+    'Field', 'object hash next_hash_offset head_data_offset payload'.split())
+assert FieldObject.__slots__ == FieldBase._fields
 
 
 class LazyEntryItem(LazyEntryItemBase):
+    def __init__(self, journal, structure):
+        self._journal = journal
+        self.offset = structure.object_offset
+        self.hash = structure.hash
+
     @classmethod
     def convert(cls, journal, structure):
         return cls(journal, structure.object_offset, structure.hash)
+
+    def _load(self):
+        self._object = self._journal.read(self.offset)
+
+    def _get(self):
+        try:
+            return self._object
+        except AttributeError:
+            self._load()
+        return self._object
+
+    def __getattr__(self, k):
+        return getattr(self._get(), k)
 
 
 class Entry(EntryBase):
@@ -58,8 +77,20 @@ class Entry(EntryBase):
         obj = obj_ptr.contents.entry
         values = [getattr(obj, k) for k in cls._fields[:-1]]
         items_ptr = cast(obj_ptr.items, POINTER(EntryItem))
-        items = [LazyEntryItem.convert(journal, items_ptr[i])
-                 for i in range(n)]
+        items = [LazyEntryItem(journal, items_ptr[i]) for i in range(n)]
+        values.append(items)
+        return cls(*values)
+
+
+class Field(FieldBase):
+    @classmethod
+    def convert_object_ptr(cls, journal, obj_ptr):
+        n = journal_file_entry_n_items(obj_ptr)
+        assert obj_ptr.contents.object.type == OBJECT_ENTRY
+        obj = obj_ptr.contents.entry
+        values = [getattr(obj, k) for k in cls._fields[:-1]]
+        items_ptr = cast(obj_ptr.items, POINTER(EntryItem))
+        items = [LazyEntryItem(journal, items_ptr[i]) for i in range(n)]
         values.append(items)
         return cls(*values)
 
@@ -75,6 +106,7 @@ class Object:
             return Field.convert_object_ptr(journal, obj_ptr)
         elif object_type == OBJECT_DATA:
             return Data.convert_object_ptr(journal, obj_ptr)
+        raise TypeError(object_type)
 
 
 class JournalHandle:
