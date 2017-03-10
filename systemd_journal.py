@@ -1,5 +1,6 @@
 from os import O_RDWR, O_CREAT, O_RDONLY
 import time
+import errno
 import collections
 import ctypes
 from ctypes import byref, c_ulonglong, c_void_p, cast
@@ -26,14 +27,17 @@ def get_timestamp():
 
 
 def make_iovec(s):
-    s = jf.String(s)
-    return jf.struct_iovec(cast(s.raw, c_void_p), ctypes.c_size_t(len(s)))
+    assert isinstance(s, jf.String)
+    res = jf.struct_iovec()
+    res.iov_base = cast(s.raw, c_void_p)
+    res.iov_len = ctypes.c_size_t(len(s))
+    return res
 
 
 class Entry:
     def __init__(self, entry_object: jf.EntryObject, items):
         self.entry_object = entry_object
-        self.items = items
+        self._items = items
 
     header = property(lambda self: self.entry_object.object)
     seqnum = property(lambda self: self.entry_object.seqnum)
@@ -41,6 +45,7 @@ class Entry:
     monotonic = property(lambda self: self.entry_object.monotonic)
     # boot_id = property(lambda self: self.entry_object.boot_id)
     xor_hash = property(lambda self: self.entry_object.xor_hash)
+    items = property(lambda self: [i.decode() for i in self._items])
 
 
 class JournalHandle:
@@ -51,6 +56,7 @@ class JournalHandle:
     def append(self, s, timestamp=None):
         if timestamp is None:
             timestamp = get_timestamp()
+        s = jf.String(s)
         iovec = make_iovec(s)
         r = jf.journal_file_append_entry(
             self._fp, byref(timestamp), byref(iovec), 1, None, None,
@@ -85,14 +91,12 @@ class JournalHandle:
 
     def _next_entry(self, dir):
         o = jf.POINTER(jf.Object)()
-        print("Read entry at offset %s" % self._entry_position)
         r = jf.journal_file_next_entry(self._fp, self._entry_position, dir,
                                        byref(o), byref(self._entry_position))
         if r == 0:
             return
         if r != 1:
             raise OSError('journal_file_next_entry returned %r' % r)
-        print("Now at offset %s" % self._entry_position)
         return self._parse_entry(o)
 
     def _parse_entry(self, obj_ptr: jf.POINTER(jf.Object)):
@@ -142,11 +146,9 @@ def main():
     test = 'TEST1=1'
     test2 = 'TEST2=2'
     o = jf.POINTER(jf.Object)()
-    p: c_ulonglong
 
     journal = journal_open('test.journal', 'x+')
     f = journal._fp
-    p = journal._entry_position
     journal.append(test)
     journal.append(test2)
     journal.append(test)
@@ -154,10 +156,9 @@ def main():
     journal.dump()
     journal.seek(0)
 
-    journal = journal_open('../systemd/src/journal/test@57b0fd2665f143a3960552457f06cddc-0000000000000001-00054a664d28040d.journal', 'r')
-    f = journal._fp
-
-    assert journal.next_entry().seqnum == 1
+    entry = journal.next_entry()
+    assert entry.seqnum == 1
+    assert entry.items == [test]
 
     assert journal.next_entry().seqnum == 2
 
@@ -168,22 +169,34 @@ def main():
     journal.seek(0)
     assert journal.next_entry().seqnum == 1
 
-    r = jf.journal_file_find_data_object(f, jf.String(test), len(test), None, byref(p))
-    assert 1 == r, r
-    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, p, DIRECTION_DOWN, byref(o), None)
+    # Output pointer and/or offset to data object
+    data_ptr = jf.POINTER(jf.Object)()
+    data_pos = c_ulonglong()
+    assert 1 == jf.journal_file_find_data_object(f, jf.String(test), len(test), byref(data_ptr), byref(data_pos))
+    assert data_ptr.contents.object.type == OBJECT_DATA
+    assert data_ptr.contents.data.n_entries == 2
+    # Which entry objects contain this data object? Optionally input pointer and offset
+    o_pos = c_ulonglong()
+    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, data_pos, DIRECTION_DOWN, byref(o), byref(o_pos))
+    assert o.contents.object.type == OBJECT_ENTRY
     assert 1 == o.contents.entry.seqnum
+    # Is journal_file_next_entry_for_data broken? How to use it properly?
+    # r = jf.journal_file_next_entry_for_data(f, o, o_pos, data_pos, DIRECTION_DOWN, byref(o), byref(o_pos))
+    # assert 1 == r, errno.errorcode.get(-r, r)
+    # assert 3 == o.contents.entry.seqnum
+    # assert 0 == jf.journal_file_next_entry_for_data(f, o, o_pos, data_pos, DIRECTION_DOWN, byref(o), byref(o_pos))
 
-    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, p, DIRECTION_UP, byref(o), None)
+    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, data_pos, DIRECTION_UP, byref(o), None)
     assert 3 == o.contents.entry.seqnum
 
-    assert 1 == jf.journal_file_find_data_object(f, jf.String(test2), len(test2), None, byref(p))
-    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, p, DIRECTION_UP, byref(o), None)
+    assert 1 == jf.journal_file_find_data_object(f, jf.String(test2), len(test2), None, byref(data_pos))
+    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, data_pos, DIRECTION_UP, byref(o), None)
     assert 2 == o.contents.entry.seqnum
 
-    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, p, DIRECTION_DOWN, byref(o), None)
+    assert 1 == jf.journal_file_next_entry_for_data(f, None, 0, data_pos, DIRECTION_DOWN, byref(o), None)
     assert 2 == o.contents.entry.seqnum
 
-    assert not jf.journal_file_find_data_object(f, jf.String("quux"), 4, None, byref(p))
+    assert not jf.journal_file_find_data_object(f, jf.String("quux"), 4, None, byref(data_pos))
 
     assert 1 == jf.journal_file_move_to_entry_by_seqnum(f, 1, DIRECTION_DOWN, byref(o), None)
     assert 1 == o.contents.entry.seqnum
