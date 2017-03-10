@@ -26,6 +26,14 @@ def get_timestamp():
     return jf.dual_timestamp(realtime, monotonic)
 
 
+def make_iovecs(strings):
+    assert all(isinstance(s, jf.String) for s in strings)
+    res = []
+    for s in strings:
+        res.append(jf.struct_iovec(cast(s.raw, c_void_p), ctypes.c_size_t(len(s))))
+    return (jf.struct_iovec * len(res))(*res)
+
+
 def make_iovec(s):
     assert isinstance(s, jf.String)
     res = jf.struct_iovec()
@@ -46,6 +54,7 @@ class Entry:
     # boot_id = property(lambda self: self.entry_object.boot_id)
     xor_hash = property(lambda self: self.entry_object.xor_hash)
     items = property(lambda self: [i.decode() for i in self._items])
+    raw_items = property(lambda self: self._items)
 
 
 class JournalHandle:
@@ -59,11 +68,26 @@ class JournalHandle:
             timestamp = get_timestamp()
         s = jf.String(s)
         iovec = make_iovec(s)
+        o = jf.POINTER(jf.Object)()
+        seqno = c_ulonglong()
         r = jf.journal_file_append_entry(
-            self._fp, byref(timestamp), byref(iovec), 1, None, None,
+            self._fp, byref(timestamp), byref(iovec), 1,
+            byref(seqno), byref(o),
             byref(self._entry_position))
         if r != 0:
             raise OSError('journal_file_append_entry returned %r' % r)
+        return seqno.value
+
+    def append_entry(self, entry: Entry):
+        items = [jf.String(s) for s in entry.raw_items]
+        iovecs = make_iovecs(items)
+        ts = jf.dual_timestamp(entry.realtime, entry.monotonic)
+        o = jf.POINTER(jf.Object)()
+        seqno = c_ulonglong()
+        r = jf.journal_file_append_entry(
+            self._fp, byref(ts), iovecs, len(items), byref(seqno), byref(o),
+            byref(self._entry_position))
+        return seqno.value
 
     def dump(self):
         jf.journal_file_dump(self._fp)
@@ -203,15 +227,14 @@ def journal_open(name, flags='r', umask=0o666):
 
 
 def main():
-    f = jf.POINTER(jf.JournalFile)()
     test = 'TEST1=1'
     test2 = 'TEST2=2'
 
     journal = journal_open('test.journal', 'x+')
-    f = journal._fp
-    journal.append(test)
-    journal.append(test2)
-    journal.append(test)
+    r = journal.append(test)
+    assert r == 1, r
+    assert journal.append(test2) == 2
+    assert journal.append(test) == 3
     # if HAVE_GCRYPT: journal_file_append_tag(f)
     journal.dump()
     journal.seek(0)

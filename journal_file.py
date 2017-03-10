@@ -228,6 +228,8 @@ class String(MutableString, Union):
     def __init__(self, obj=""):
         if isinstance(obj, (str, UserString)):
             self.data = str(obj).encode()
+        elif isinstance(obj, bytes):
+            self.data = obj
         else:
             self.raw = obj
 
