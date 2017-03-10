@@ -11,7 +11,7 @@ def main():
     fin = journal_open(args.input, 'r')
     fout = journal_open(args.output, 'x+')
     for e in fin:
-        print(fout.append_entry(e))
+        print(fout.append_entry(e), e.items)
     fout.close()
 
 
