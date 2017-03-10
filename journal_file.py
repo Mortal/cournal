@@ -1621,14 +1621,14 @@ _journal_file_copy_entry.argtypes = [POINTER(JournalFile),
                                      POINTER(POINTER(Object)),
                                      POINTER(c_uint64)]
 _journal_file_copy_entry.restype = c_int
-def journal_file_copy_entry(from: POINTER(JournalFile),
+def journal_file_copy_entry(from_: POINTER(JournalFile),
                             to: POINTER(JournalFile),
                             o: POINTER(Object),
                             p: c_uint64,
                             seqnum: POINTER(c_uint64),
                             ret: POINTER(POINTER(Object)),
                             offset: POINTER(c_uint64)) -> c_int:
-    return _journal_file_copy_entry(from, to, o, p, seqnum, ret, offset)
+    return _journal_file_copy_entry(from_, to, o, p, seqnum, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 243
 _journal_file_dump = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_dump
@@ -1691,9 +1691,9 @@ _journal_file_get_cutoff_realtime_usec.argtypes = [
     POINTER(JournalFile), POINTER(usec_t), POINTER(usec_t)]
 _journal_file_get_cutoff_realtime_usec.restype = c_int
 def journal_file_get_cutoff_realtime_usec(f: POINTER(JournalFile),
-                                          from: POINTER(usec_t),
+                                          from_: POINTER(usec_t),
                                           to: POINTER(usec_t)) -> c_int:
-    return _journal_file_get_cutoff_realtime_usec(f, from, to)
+    return _journal_file_get_cutoff_realtime_usec(f, from_, to)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 255
 _journal_file_get_cutoff_monotonic_usec = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_get_cutoff_monotonic_usec
@@ -1702,9 +1702,9 @@ _journal_file_get_cutoff_monotonic_usec.argtypes = [
 _journal_file_get_cutoff_monotonic_usec.restype = c_int
 def journal_file_get_cutoff_monotonic_usec(f: POINTER(JournalFile),
                                            boot: sd_id128_t,
-                                           from: POINTER(usec_t),
+                                           from_: POINTER(usec_t),
                                            to: POINTER(usec_t)) -> c_int:
-    return _journal_file_get_cutoff_monotonic_usec(f, boot, from, to)
+    return _journal_file_get_cutoff_monotonic_usec(f, boot, from_, to)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 257
 _journal_file_rotate_suggested = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_rotate_suggested
