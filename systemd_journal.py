@@ -274,8 +274,6 @@ def main():
     else:
         assert False, 'seek() did not raise IndexError'
 
-    journal.rotate()
-    journal.rotate()
     journal.close()
 
 
