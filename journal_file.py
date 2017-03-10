@@ -227,7 +227,7 @@ class String(MutableString, Union):
 
     def __init__(self, obj=""):
         if isinstance(obj, (str, UserString)):
-            self.data = str(obj)
+            self.data = obj.encode()
         else:
             self.raw = obj
 
@@ -938,7 +938,7 @@ struct_TagObject._fields_ = [
     ('object', ObjectHeader),
     ('seqnum', le64_t),
     ('epoch', le64_t),
-    ('tag', c_uint8 * (256 / 8)),
+    ('tag', c_uint8 * (256 // 8)),
 ]
 
 union_Object.__slots__ = [
