@@ -837,7 +837,7 @@ struct_ObjectHeader._fields_ = [
     ('flags', c_uint8),
     ('reserved', c_uint8 * 6),
     ('size', le64_t),
-    ('payload', c_uint8 * 0),
+    ('payload', POINTER(c_uint8)),
 ]
 
 struct_DataObject.__slots__ = [
@@ -858,7 +858,7 @@ struct_DataObject._fields_ = [
     ('entry_offset', le64_t),
     ('entry_array_offset', le64_t),
     ('n_entries', le64_t),
-    ('payload', c_uint8 * 0),
+    ('payload', POINTER(c_uint8)),
 ]
 
 struct_FieldObject.__slots__ = [
@@ -873,7 +873,7 @@ struct_FieldObject._fields_ = [
     ('hash', le64_t),
     ('next_hash_offset', le64_t),
     ('head_data_offset', le64_t),
-    ('payload', c_uint8 * 0),
+    ('payload', POINTER(c_uint8)),
 ]
 
 struct_EntryItem.__slots__ = [
@@ -885,7 +885,15 @@ struct_EntryItem._fields_ = [
     ('hash', le64_t),
 ]
 
-struct_EntryObject.__slots__ = [ 'object', 'seqnum', 'realtime', 'monotonic', 'boot_id', 'xor_hash', 'items', ]
+struct_EntryObject.__slots__ = [
+    'object',
+    'seqnum',
+    'realtime',
+    'monotonic',
+    'boot_id',
+    'xor_hash',
+    'items',
+]
 struct_EntryObject._fields_ = [
     ('object', ObjectHeader),
     ('seqnum', le64_t),
@@ -893,7 +901,7 @@ struct_EntryObject._fields_ = [
     ('monotonic', le64_t),
     ('boot_id', sd_id128_t),
     ('xor_hash', le64_t),
-    ('items', EntryItem * 0),
+    ('items', POINTER(EntryItem)),
 ]
 
 struct_HashItem.__slots__ = [
@@ -1177,250 +1185,548 @@ struct_JournalFile._fields_ = [
 JournalFile = struct_JournalFile # /home/rav/work/systemd/src/journal/journal-file.h: 144
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 146
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_open'):
-    journal_file_open = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_open
-    journal_file_open.argtypes = [c_int, String, c_int, mode_t, c_bool, c_bool, POINTER(JournalMetrics), POINTER(MMapCache), POINTER(Set), POINTER(JournalFile), POINTER(POINTER(JournalFile))]
-    journal_file_open.restype = c_int
+_journal_file_open = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_open
+_journal_file_open.argtypes = [c_int,
+                               String,
+                               c_int,
+                               mode_t,
+                               c_bool,
+                               c_bool,
+                               POINTER(JournalMetrics),
+                               POINTER(MMapCache),
+                               POINTER(Set),
+                               POINTER(JournalFile),
+                               POINTER(POINTER(JournalFile))]
+_journal_file_open.restype = c_int
+def journal_file_open(fd: c_int,
+                      fname: String,
+                      flags: c_int,
+                      mode: mode_t,
+                      compress: c_bool,
+                      seal: c_bool,
+                      metrics: POINTER(JournalMetrics),
+                      mmap_cache: POINTER(MMapCache),
+                      deferred_closes: POINTER(Set),
+                      template: POINTER(JournalFile),
+                      ret: POINTER(POINTER(JournalFile))) -> c_int:
+    return _journal_file_open(fd,
+                              fname,
+                              flags,
+                              mode,
+                              compress,
+                              seal,
+                              metrics,
+                              mmap_cache,
+                              deferred_closes,
+                              template,
+                              ret)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 159
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_set_offline'):
-    journal_file_set_offline = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_set_offline
-    journal_file_set_offline.argtypes = [POINTER(JournalFile), c_bool]
-    journal_file_set_offline.restype = c_int
+_journal_file_set_offline = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_set_offline
+_journal_file_set_offline.argtypes = [POINTER(JournalFile), c_bool]
+_journal_file_set_offline.restype = c_int
+def journal_file_set_offline(f: POINTER(JournalFile), wait: c_bool) -> c_int:
+    return _journal_file_set_offline(f, wait)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 160
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_is_offlining'):
-    journal_file_is_offlining = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_is_offlining
-    journal_file_is_offlining.argtypes = [POINTER(JournalFile)]
-    journal_file_is_offlining.restype = c_bool
+_journal_file_is_offlining = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_is_offlining
+_journal_file_is_offlining.argtypes = [POINTER(JournalFile)]
+_journal_file_is_offlining.restype = c_bool
+def journal_file_is_offlining(f: POINTER(JournalFile)) -> c_bool:
+    return _journal_file_is_offlining(f)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 161
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_close'):
-    journal_file_close = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_close
-    journal_file_close.argtypes = [POINTER(JournalFile)]
-    journal_file_close.restype = POINTER(JournalFile)
+_journal_file_close = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_close
+_journal_file_close.argtypes = [POINTER(JournalFile)]
+_journal_file_close.restype = POINTER(JournalFile)
+def journal_file_close(j: POINTER(JournalFile)) -> POINTER(JournalFile):
+    return _journal_file_close(j)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 162
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_close_set'):
-    journal_file_close_set = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_close_set
-    journal_file_close_set.argtypes = [POINTER(Set)]
-    journal_file_close_set.restype = None
+_journal_file_close_set = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_close_set
+_journal_file_close_set.argtypes = [POINTER(Set)]
+_journal_file_close_set.restype = None
+def journal_file_close_set(s: POINTER(Set)) -> None:
+    return _journal_file_close_set(s)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 164
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_open_reliably'):
-    journal_file_open_reliably = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_open_reliably
-    journal_file_open_reliably.argtypes = [String, c_int, mode_t, c_bool, c_bool, POINTER(JournalMetrics), POINTER(MMapCache), POINTER(Set), POINTER(JournalFile), POINTER(POINTER(JournalFile))]
-    journal_file_open_reliably.restype = c_int
+_journal_file_open_reliably = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_open_reliably
+_journal_file_open_reliably.argtypes = [String,
+                                        c_int,
+                                        mode_t,
+                                        c_bool,
+                                        c_bool,
+                                        POINTER(JournalMetrics),
+                                        POINTER(MMapCache),
+                                        POINTER(Set),
+                                        POINTER(JournalFile),
+                                        POINTER(POINTER(JournalFile))]
+_journal_file_open_reliably.restype = c_int
+def journal_file_open_reliably(fname: String,
+                               flags: c_int,
+                               mode: mode_t,
+                               compress: c_bool,
+                               seal: c_bool,
+                               metrics: POINTER(JournalMetrics),
+                               mmap_cache: POINTER(MMapCache),
+                               deferred_closes: POINTER(Set),
+                               template: POINTER(JournalFile),
+                               ret: POINTER(POINTER(JournalFile))) -> c_int:
+    return _journal_file_open_reliably(fname,
+                                       flags,
+                                       mode,
+                                       compress,
+                                       seal,
+                                       metrics,
+                                       mmap_cache,
+                                       deferred_closes,
+                                       template,
+                                       ret)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 210
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_object'):
-    journal_file_move_to_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_object
-    journal_file_move_to_object.argtypes = [POINTER(JournalFile), ObjectType, c_uint64, POINTER(POINTER(Object))]
-    journal_file_move_to_object.restype = c_int
+_journal_file_move_to_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_object
+_journal_file_move_to_object.argtypes = [
+    POINTER(JournalFile), ObjectType, c_uint64, POINTER(POINTER(Object))]
+_journal_file_move_to_object.restype = c_int
+def journal_file_move_to_object(f: POINTER(JournalFile),
+                                type: ObjectType,
+                                offset: c_uint64,
+                                ret: POINTER(POINTER(Object))) -> c_int:
+    return _journal_file_move_to_object(f, type, offset, ret)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 212
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_entry_n_items'):
-    journal_file_entry_n_items = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_entry_n_items
-    journal_file_entry_n_items.argtypes = [POINTER(Object)]
-    journal_file_entry_n_items.restype = c_uint64
+_journal_file_entry_n_items = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_entry_n_items
+_journal_file_entry_n_items.argtypes = [POINTER(Object)]
+_journal_file_entry_n_items.restype = c_uint64
+def journal_file_entry_n_items(o: POINTER(Object)) -> c_uint64:
+    return _journal_file_entry_n_items(o)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 213
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_entry_array_n_items'):
-    journal_file_entry_array_n_items = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_entry_array_n_items
-    journal_file_entry_array_n_items.argtypes = [POINTER(Object)]
-    journal_file_entry_array_n_items.restype = c_uint64
+_journal_file_entry_array_n_items = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_entry_array_n_items
+_journal_file_entry_array_n_items.argtypes = [POINTER(Object)]
+_journal_file_entry_array_n_items.restype = c_uint64
+def journal_file_entry_array_n_items(o: POINTER(Object)) -> c_uint64:
+    return _journal_file_entry_array_n_items(o)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 214
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_hash_table_n_items'):
-    journal_file_hash_table_n_items = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_hash_table_n_items
-    journal_file_hash_table_n_items.argtypes = [POINTER(Object)]
-    journal_file_hash_table_n_items.restype = c_uint64
+_journal_file_hash_table_n_items = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_hash_table_n_items
+_journal_file_hash_table_n_items.argtypes = [POINTER(Object)]
+_journal_file_hash_table_n_items.restype = c_uint64
+def journal_file_hash_table_n_items(o: POINTER(Object)) -> c_uint64:
+    return _journal_file_hash_table_n_items(o)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 216
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_append_object'):
-    journal_file_append_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_append_object
-    journal_file_append_object.argtypes = [POINTER(JournalFile), ObjectType, c_uint64, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_append_object.restype = c_int
+_journal_file_append_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_append_object
+_journal_file_append_object.argtypes = [POINTER(JournalFile),
+                                        ObjectType,
+                                        c_uint64,
+                                        POINTER(POINTER(Object)),
+                                        POINTER(c_uint64)]
+_journal_file_append_object.restype = c_int
+def journal_file_append_object(f: POINTER(JournalFile),
+                               type: ObjectType,
+                               size: c_uint64,
+                               ret: POINTER(POINTER(Object)),
+                               offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_append_object(f, type, size, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 217
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_append_entry'):
-    journal_file_append_entry = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_append_entry
-    journal_file_append_entry.argtypes = [POINTER(JournalFile), POINTER(dual_timestamp), POINTER(struct_iovec), c_uint, POINTER(c_uint64), POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_append_entry.restype = c_int
+_journal_file_append_entry = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_append_entry
+_journal_file_append_entry.argtypes = [POINTER(JournalFile),
+                                       POINTER(dual_timestamp),
+                                       POINTER(struct_iovec),
+                                       c_uint,
+                                       POINTER(c_uint64),
+                                       POINTER(POINTER(Object)),
+                                       POINTER(c_uint64)]
+_journal_file_append_entry.restype = c_int
+def journal_file_append_entry(f: POINTER(JournalFile),
+                              ts: POINTER(dual_timestamp),
+                              iovec: POINTER(struct_iovec),
+                              n_iovec: c_uint,
+                              seqno: POINTER(c_uint64),
+                              ret: POINTER(POINTER(Object)),
+                              offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_append_entry(
+        f, ts, iovec, n_iovec, seqno, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 219
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_find_data_object'):
-    journal_file_find_data_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_data_object
-    journal_file_find_data_object.argtypes = [POINTER(JournalFile), POINTER(None), c_uint64, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_find_data_object.restype = c_int
+_journal_file_find_data_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_data_object
+_journal_file_find_data_object.argtypes = [POINTER(JournalFile),
+                                           POINTER(None),
+                                           c_uint64,
+                                           POINTER(POINTER(Object)),
+                                           POINTER(c_uint64)]
+_journal_file_find_data_object.restype = c_int
+def journal_file_find_data_object(f: POINTER(JournalFile),
+                                  data: POINTER(None),
+                                  size: c_uint64,
+                                  ret: POINTER(POINTER(Object)),
+                                  offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_find_data_object(f, data, size, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 220
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_find_data_object_with_hash'):
-    journal_file_find_data_object_with_hash = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_data_object_with_hash
-    journal_file_find_data_object_with_hash.argtypes = [POINTER(JournalFile), POINTER(None), c_uint64, c_uint64, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_find_data_object_with_hash.restype = c_int
+_journal_file_find_data_object_with_hash = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_data_object_with_hash
+_journal_file_find_data_object_with_hash.argtypes = [POINTER(JournalFile),
+                                                     POINTER(None),
+                                                     c_uint64,
+                                                     c_uint64,
+                                                     POINTER(POINTER(Object)),
+                                                     POINTER(c_uint64)]
+_journal_file_find_data_object_with_hash.restype = c_int
+def journal_file_find_data_object_with_hash(
+    f: POINTER(JournalFile),
+    data: POINTER(None),
+    size: c_uint64,
+    hash: c_uint64,
+    ret: POINTER(POINTER(Object)),
+    offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_find_data_object_with_hash(
+        f, data, size, hash, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 222
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_find_field_object'):
-    journal_file_find_field_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_field_object
-    journal_file_find_field_object.argtypes = [POINTER(JournalFile), POINTER(None), c_uint64, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_find_field_object.restype = c_int
+_journal_file_find_field_object = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_field_object
+_journal_file_find_field_object.argtypes = [POINTER(JournalFile),
+                                            POINTER(None),
+                                            c_uint64,
+                                            POINTER(POINTER(Object)),
+                                            POINTER(c_uint64)]
+_journal_file_find_field_object.restype = c_int
+def journal_file_find_field_object(f: POINTER(JournalFile),
+                                   field: POINTER(None),
+                                   size: c_uint64,
+                                   ret: POINTER(POINTER(Object)),
+                                   offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_find_field_object(f, field, size, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 223
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_find_field_object_with_hash'):
-    journal_file_find_field_object_with_hash = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_field_object_with_hash
-    journal_file_find_field_object_with_hash.argtypes = [POINTER(JournalFile), POINTER(None), c_uint64, c_uint64, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_find_field_object_with_hash.restype = c_int
+_journal_file_find_field_object_with_hash = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_find_field_object_with_hash
+_journal_file_find_field_object_with_hash.argtypes = [POINTER(JournalFile),
+                                                      POINTER(None),
+                                                      c_uint64,
+                                                      c_uint64,
+                                                      POINTER(POINTER(Object)),
+                                                      POINTER(c_uint64)]
+_journal_file_find_field_object_with_hash.restype = c_int
+def journal_file_find_field_object_with_hash(
+    f: POINTER(JournalFile),
+    field: POINTER(None),
+    size: c_uint64,
+    hash: c_uint64,
+    ret: POINTER(POINTER(Object)),
+    offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_find_field_object_with_hash(
+        f, field, size, hash, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 225
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_reset_location'):
-    journal_file_reset_location = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_reset_location
-    journal_file_reset_location.argtypes = [POINTER(JournalFile)]
-    journal_file_reset_location.restype = None
+_journal_file_reset_location = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_reset_location
+_journal_file_reset_location.argtypes = [POINTER(JournalFile)]
+_journal_file_reset_location.restype = None
+def journal_file_reset_location(f: POINTER(JournalFile)) -> None:
+    return _journal_file_reset_location(f)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 226
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_save_location'):
-    journal_file_save_location = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_save_location
-    journal_file_save_location.argtypes = [POINTER(JournalFile), POINTER(Object), c_uint64]
-    journal_file_save_location.restype = None
+_journal_file_save_location = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_save_location
+_journal_file_save_location.argtypes = [
+    POINTER(JournalFile), POINTER(Object), c_uint64]
+_journal_file_save_location.restype = None
+def journal_file_save_location(
+    f: POINTER(JournalFile), o: POINTER(Object), offset: c_uint64) -> None:
+    return _journal_file_save_location(f, o, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 227
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_compare_locations'):
-    journal_file_compare_locations = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_compare_locations
-    journal_file_compare_locations.argtypes = [POINTER(JournalFile), POINTER(JournalFile)]
-    journal_file_compare_locations.restype = c_int
+_journal_file_compare_locations = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_compare_locations
+_journal_file_compare_locations.argtypes = [
+    POINTER(JournalFile), POINTER(JournalFile)]
+_journal_file_compare_locations.restype = c_int
+def journal_file_compare_locations(
+    af: POINTER(JournalFile), bf: POINTER(JournalFile)) -> c_int:
+    return _journal_file_compare_locations(af, bf)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 228
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_next_entry'):
-    journal_file_next_entry = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_next_entry
-    journal_file_next_entry.argtypes = [POINTER(JournalFile), c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_next_entry.restype = c_int
+_journal_file_next_entry = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_next_entry
+_journal_file_next_entry.argtypes = [POINTER(JournalFile),
+                                     c_uint64,
+                                     direction_t,
+                                     POINTER(POINTER(Object)),
+                                     POINTER(c_uint64)]
+_journal_file_next_entry.restype = c_int
+def journal_file_next_entry(f: POINTER(JournalFile),
+                            p: c_uint64,
+                            direction: direction_t,
+                            ret: POINTER(POINTER(Object)),
+                            offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_next_entry(f, p, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 230
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_next_entry_for_data'):
-    journal_file_next_entry_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_next_entry_for_data
-    journal_file_next_entry_for_data.argtypes = [POINTER(JournalFile), POINTER(Object), c_uint64, c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_next_entry_for_data.restype = c_int
+_journal_file_next_entry_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_next_entry_for_data
+_journal_file_next_entry_for_data.argtypes = [POINTER(JournalFile),
+                                              POINTER(Object),
+                                              c_uint64,
+                                              c_uint64,
+                                              direction_t,
+                                              POINTER(POINTER(Object)),
+                                              POINTER(c_uint64)]
+_journal_file_next_entry_for_data.restype = c_int
+def journal_file_next_entry_for_data(f: POINTER(JournalFile),
+                                     o: POINTER(Object),
+                                     p: c_uint64,
+                                     data_offset: c_uint64,
+                                     direction: direction_t,
+                                     ret: POINTER(POINTER(Object)),
+                                     offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_next_entry_for_data(
+        f, o, p, data_offset, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 232
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_entry_by_seqnum'):
-    journal_file_move_to_entry_by_seqnum = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_seqnum
-    journal_file_move_to_entry_by_seqnum.argtypes = [POINTER(JournalFile), c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_move_to_entry_by_seqnum.restype = c_int
+_journal_file_move_to_entry_by_seqnum = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_seqnum
+_journal_file_move_to_entry_by_seqnum.argtypes = [POINTER(JournalFile),
+                                                  c_uint64,
+                                                  direction_t,
+                                                  POINTER(POINTER(Object)),
+                                                  POINTER(c_uint64)]
+_journal_file_move_to_entry_by_seqnum.restype = c_int
+def journal_file_move_to_entry_by_seqnum(f: POINTER(JournalFile),
+                                         seqnum: c_uint64,
+                                         direction: direction_t,
+                                         ret: POINTER(POINTER(Object)),
+                                         offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_move_to_entry_by_seqnum(
+        f, seqnum, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 233
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_entry_by_realtime'):
-    journal_file_move_to_entry_by_realtime = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_realtime
-    journal_file_move_to_entry_by_realtime.argtypes = [POINTER(JournalFile), c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_move_to_entry_by_realtime.restype = c_int
+_journal_file_move_to_entry_by_realtime = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_realtime
+_journal_file_move_to_entry_by_realtime.argtypes = [POINTER(JournalFile),
+                                                    c_uint64,
+                                                    direction_t,
+                                                    POINTER(POINTER(Object)),
+                                                    POINTER(c_uint64)]
+_journal_file_move_to_entry_by_realtime.restype = c_int
+def journal_file_move_to_entry_by_realtime(f: POINTER(JournalFile),
+                                           realtime: c_uint64,
+                                           direction: direction_t,
+                                           ret: POINTER(POINTER(Object)),
+                                           offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_move_to_entry_by_realtime(
+        f, realtime, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 234
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_entry_by_monotonic'):
-    journal_file_move_to_entry_by_monotonic = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_monotonic
-    journal_file_move_to_entry_by_monotonic.argtypes = [POINTER(JournalFile), sd_id128_t, c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_move_to_entry_by_monotonic.restype = c_int
+_journal_file_move_to_entry_by_monotonic = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_monotonic
+_journal_file_move_to_entry_by_monotonic.argtypes = [POINTER(JournalFile),
+                                                     sd_id128_t,
+                                                     c_uint64,
+                                                     direction_t,
+                                                     POINTER(POINTER(Object)),
+                                                     POINTER(c_uint64)]
+_journal_file_move_to_entry_by_monotonic.restype = c_int
+def journal_file_move_to_entry_by_monotonic(
+    f: POINTER(JournalFile),
+    boot_id: sd_id128_t,
+    monotonic: c_uint64,
+    direction: direction_t,
+    ret: POINTER(POINTER(Object)),
+    offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_move_to_entry_by_monotonic(
+        f, boot_id, monotonic, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 236
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_entry_by_offset_for_data'):
-    journal_file_move_to_entry_by_offset_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_offset_for_data
-    journal_file_move_to_entry_by_offset_for_data.argtypes = [POINTER(JournalFile), c_uint64, c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_move_to_entry_by_offset_for_data.restype = c_int
+_journal_file_move_to_entry_by_offset_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_offset_for_data
+_journal_file_move_to_entry_by_offset_for_data.argtypes = [
+    POINTER(JournalFile),
+    c_uint64,
+    c_uint64,
+    direction_t,
+    POINTER(POINTER(Object)),
+    POINTER(c_uint64)]
+_journal_file_move_to_entry_by_offset_for_data.restype = c_int
+def journal_file_move_to_entry_by_offset_for_data(
+    f: POINTER(JournalFile),
+    data_offset: c_uint64,
+    p: c_uint64,
+    direction: direction_t,
+    ret: POINTER(POINTER(Object)),
+    offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_move_to_entry_by_offset_for_data(
+        f, data_offset, p, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 237
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_entry_by_seqnum_for_data'):
-    journal_file_move_to_entry_by_seqnum_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_seqnum_for_data
-    journal_file_move_to_entry_by_seqnum_for_data.argtypes = [POINTER(JournalFile), c_uint64, c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_move_to_entry_by_seqnum_for_data.restype = c_int
+_journal_file_move_to_entry_by_seqnum_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_seqnum_for_data
+_journal_file_move_to_entry_by_seqnum_for_data.argtypes = [
+    POINTER(JournalFile),
+    c_uint64,
+    c_uint64,
+    direction_t,
+    POINTER(POINTER(Object)),
+    POINTER(c_uint64)]
+_journal_file_move_to_entry_by_seqnum_for_data.restype = c_int
+def journal_file_move_to_entry_by_seqnum_for_data(
+    f: POINTER(JournalFile),
+    data_offset: c_uint64,
+    seqnum: c_uint64,
+    direction: direction_t,
+    ret: POINTER(POINTER(Object)),
+    offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_move_to_entry_by_seqnum_for_data(
+        f, data_offset, seqnum, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 238
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_entry_by_realtime_for_data'):
-    journal_file_move_to_entry_by_realtime_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_realtime_for_data
-    journal_file_move_to_entry_by_realtime_for_data.argtypes = [POINTER(JournalFile), c_uint64, c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_move_to_entry_by_realtime_for_data.restype = c_int
+_journal_file_move_to_entry_by_realtime_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_realtime_for_data
+_journal_file_move_to_entry_by_realtime_for_data.argtypes = [
+    POINTER(JournalFile),
+    c_uint64,
+    c_uint64,
+    direction_t,
+    POINTER(POINTER(Object)),
+    POINTER(c_uint64)]
+_journal_file_move_to_entry_by_realtime_for_data.restype = c_int
+def journal_file_move_to_entry_by_realtime_for_data(
+    f: POINTER(JournalFile),
+    data_offset: c_uint64,
+    realtime: c_uint64,
+    direction: direction_t,
+    ret: POINTER(POINTER(Object)),
+    offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_move_to_entry_by_realtime_for_data(
+        f, data_offset, realtime, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 239
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_move_to_entry_by_monotonic_for_data'):
-    journal_file_move_to_entry_by_monotonic_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_monotonic_for_data
-    journal_file_move_to_entry_by_monotonic_for_data.argtypes = [POINTER(JournalFile), c_uint64, sd_id128_t, c_uint64, direction_t, POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_move_to_entry_by_monotonic_for_data.restype = c_int
+_journal_file_move_to_entry_by_monotonic_for_data = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_move_to_entry_by_monotonic_for_data
+_journal_file_move_to_entry_by_monotonic_for_data.argtypes = [
+    POINTER(JournalFile),
+    c_uint64,
+    sd_id128_t,
+    c_uint64,
+    direction_t,
+    POINTER(POINTER(Object)),
+    POINTER(c_uint64)]
+_journal_file_move_to_entry_by_monotonic_for_data.restype = c_int
+def journal_file_move_to_entry_by_monotonic_for_data(
+    f: POINTER(JournalFile),
+    data_offset: c_uint64,
+    boot_id: sd_id128_t,
+    monotonic: c_uint64,
+    direction: direction_t,
+    ret: POINTER(POINTER(Object)),
+    offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_move_to_entry_by_monotonic_for_data(
+        f, data_offset, boot_id, monotonic, direction, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 241
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_copy_entry'):
-    journal_file_copy_entry = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_copy_entry
-    journal_file_copy_entry.argtypes = [POINTER(JournalFile), POINTER(JournalFile), POINTER(Object), c_uint64, POINTER(c_uint64), POINTER(POINTER(Object)), POINTER(c_uint64)]
-    journal_file_copy_entry.restype = c_int
+_journal_file_copy_entry = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_copy_entry
+_journal_file_copy_entry.argtypes = [POINTER(JournalFile),
+                                     POINTER(JournalFile),
+                                     POINTER(Object),
+                                     c_uint64,
+                                     POINTER(c_uint64),
+                                     POINTER(POINTER(Object)),
+                                     POINTER(c_uint64)]
+_journal_file_copy_entry.restype = c_int
+def journal_file_copy_entry(from: POINTER(JournalFile),
+                            to: POINTER(JournalFile),
+                            o: POINTER(Object),
+                            p: c_uint64,
+                            seqnum: POINTER(c_uint64),
+                            ret: POINTER(POINTER(Object)),
+                            offset: POINTER(c_uint64)) -> c_int:
+    return _journal_file_copy_entry(from, to, o, p, seqnum, ret, offset)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 243
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_dump'):
-    journal_file_dump = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_dump
-    journal_file_dump.argtypes = [POINTER(JournalFile)]
-    journal_file_dump.restype = None
+_journal_file_dump = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_dump
+_journal_file_dump.argtypes = [POINTER(JournalFile)]
+_journal_file_dump.restype = None
+def journal_file_dump(f: POINTER(JournalFile)) -> None:
+    return _journal_file_dump(f)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 244
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_print_header'):
-    journal_file_print_header = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_print_header
-    journal_file_print_header.argtypes = [POINTER(JournalFile)]
-    journal_file_print_header.restype = None
+_journal_file_print_header = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_print_header
+_journal_file_print_header.argtypes = [POINTER(JournalFile)]
+_journal_file_print_header.restype = None
+def journal_file_print_header(f: POINTER(JournalFile)) -> None:
+    return _journal_file_print_header(f)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 246
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_rotate'):
-    journal_file_rotate = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_rotate
-    journal_file_rotate.argtypes = [POINTER(POINTER(JournalFile)), c_bool, c_bool, POINTER(Set)]
-    journal_file_rotate.restype = c_int
+_journal_file_rotate = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_rotate
+_journal_file_rotate.argtypes = [
+    POINTER(POINTER(JournalFile)), c_bool, c_bool, POINTER(Set)]
+_journal_file_rotate.restype = c_int
+def journal_file_rotate(f: POINTER(POINTER(JournalFile)),
+                        compress: c_bool,
+                        seal: c_bool,
+                        deferred_closes: POINTER(Set)) -> c_int:
+    return _journal_file_rotate(f, compress, seal, deferred_closes)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 248
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_post_change'):
-    journal_file_post_change = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_post_change
-    journal_file_post_change.argtypes = [POINTER(JournalFile)]
-    journal_file_post_change.restype = None
+_journal_file_post_change = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_post_change
+_journal_file_post_change.argtypes = [POINTER(JournalFile)]
+_journal_file_post_change.restype = None
+def journal_file_post_change(f: POINTER(JournalFile)) -> None:
+    return _journal_file_post_change(f)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 249
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_enable_post_change_timer'):
-    journal_file_enable_post_change_timer = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_enable_post_change_timer
-    journal_file_enable_post_change_timer.argtypes = [POINTER(JournalFile), POINTER(sd_event), usec_t]
-    journal_file_enable_post_change_timer.restype = c_int
+_journal_file_enable_post_change_timer = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_enable_post_change_timer
+_journal_file_enable_post_change_timer.argtypes = [
+    POINTER(JournalFile), POINTER(sd_event), usec_t]
+_journal_file_enable_post_change_timer.restype = c_int
+def journal_file_enable_post_change_timer(
+    f: POINTER(JournalFile), e: POINTER(sd_event), t: usec_t) -> c_int:
+    return _journal_file_enable_post_change_timer(f, e, t)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 251
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_reset_metrics'):
-    journal_reset_metrics = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_reset_metrics
-    journal_reset_metrics.argtypes = [POINTER(JournalMetrics)]
-    journal_reset_metrics.restype = None
+_journal_reset_metrics = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_reset_metrics
+_journal_reset_metrics.argtypes = [POINTER(JournalMetrics)]
+_journal_reset_metrics.restype = None
+def journal_reset_metrics(m: POINTER(JournalMetrics)) -> None:
+    return _journal_reset_metrics(m)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 252
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_default_metrics'):
-    journal_default_metrics = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_default_metrics
-    journal_default_metrics.argtypes = [POINTER(JournalMetrics), c_int]
-    journal_default_metrics.restype = None
+_journal_default_metrics = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_default_metrics
+_journal_default_metrics.argtypes = [POINTER(JournalMetrics), c_int]
+_journal_default_metrics.restype = None
+def journal_default_metrics(m: POINTER(JournalMetrics), fd: c_int) -> None:
+    return _journal_default_metrics(m, fd)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 254
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_get_cutoff_realtime_usec'):
-    journal_file_get_cutoff_realtime_usec = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_get_cutoff_realtime_usec
-    journal_file_get_cutoff_realtime_usec.argtypes = [POINTER(JournalFile), POINTER(usec_t), POINTER(usec_t)]
-    journal_file_get_cutoff_realtime_usec.restype = c_int
+_journal_file_get_cutoff_realtime_usec = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_get_cutoff_realtime_usec
+_journal_file_get_cutoff_realtime_usec.argtypes = [
+    POINTER(JournalFile), POINTER(usec_t), POINTER(usec_t)]
+_journal_file_get_cutoff_realtime_usec.restype = c_int
+def journal_file_get_cutoff_realtime_usec(f: POINTER(JournalFile),
+                                          from: POINTER(usec_t),
+                                          to: POINTER(usec_t)) -> c_int:
+    return _journal_file_get_cutoff_realtime_usec(f, from, to)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 255
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_get_cutoff_monotonic_usec'):
-    journal_file_get_cutoff_monotonic_usec = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_get_cutoff_monotonic_usec
-    journal_file_get_cutoff_monotonic_usec.argtypes = [POINTER(JournalFile), sd_id128_t, POINTER(usec_t), POINTER(usec_t)]
-    journal_file_get_cutoff_monotonic_usec.restype = c_int
+_journal_file_get_cutoff_monotonic_usec = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_get_cutoff_monotonic_usec
+_journal_file_get_cutoff_monotonic_usec.argtypes = [
+    POINTER(JournalFile), sd_id128_t, POINTER(usec_t), POINTER(usec_t)]
+_journal_file_get_cutoff_monotonic_usec.restype = c_int
+def journal_file_get_cutoff_monotonic_usec(f: POINTER(JournalFile),
+                                           boot: sd_id128_t,
+                                           from: POINTER(usec_t),
+                                           to: POINTER(usec_t)) -> c_int:
+    return _journal_file_get_cutoff_monotonic_usec(f, boot, from, to)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 257
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_rotate_suggested'):
-    journal_file_rotate_suggested = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_rotate_suggested
-    journal_file_rotate_suggested.argtypes = [POINTER(JournalFile), usec_t]
-    journal_file_rotate_suggested.restype = c_bool
+_journal_file_rotate_suggested = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_rotate_suggested
+_journal_file_rotate_suggested.argtypes = [POINTER(JournalFile), usec_t]
+_journal_file_rotate_suggested.restype = c_bool
+def journal_file_rotate_suggested(
+    f: POINTER(JournalFile), max_file_usec: usec_t) -> c_bool:
+    return _journal_file_rotate_suggested(f, max_file_usec)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 259
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_map_data_hash_table'):
-    journal_file_map_data_hash_table = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_map_data_hash_table
-    journal_file_map_data_hash_table.argtypes = [POINTER(JournalFile)]
-    journal_file_map_data_hash_table.restype = c_int
+_journal_file_map_data_hash_table = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_map_data_hash_table
+_journal_file_map_data_hash_table.argtypes = [POINTER(JournalFile)]
+_journal_file_map_data_hash_table.restype = c_int
+def journal_file_map_data_hash_table(f: POINTER(JournalFile)) -> c_int:
+    return _journal_file_map_data_hash_table(f)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 260
-if hasattr(_libs['/usr/lib/systemd/libsystemd-shared-232.so'], 'journal_file_map_field_hash_table'):
-    journal_file_map_field_hash_table = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_map_field_hash_table
-    journal_file_map_field_hash_table.argtypes = [POINTER(JournalFile)]
-    journal_file_map_field_hash_table.restype = c_int
+_journal_file_map_field_hash_table = _libs['/usr/lib/systemd/libsystemd-shared-232.so'].journal_file_map_field_hash_table
+_journal_file_map_field_hash_table.argtypes = [POINTER(JournalFile)]
+_journal_file_map_field_hash_table.restype = c_int
+def journal_file_map_field_hash_table(f: POINTER(JournalFile)) -> c_int:
+    return _journal_file_map_field_hash_table(f)
 
 # /home/rav/work/systemd/src/journal/journal-file.h: 176
 def ALIGN64(x):

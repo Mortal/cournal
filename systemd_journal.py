@@ -1,6 +1,7 @@
 from os import O_RDWR, O_CREAT, O_RDONLY
 import time
 import collections
+import ctypes
 from ctypes import byref, c_ulonglong, c_void_p, cast
 import journal_file
 from journal_file import (
@@ -135,7 +136,19 @@ class JournalHandle:
     def read_object(self, offset, type=OBJECT_UNUSED):
         o = POINTER(journal_file.Object)()
         r = journal_file_move_to_object(self._fp, type, offset, byref(o))
-        return Object.convert_object_ptr(self, o)
+        if r != 0:
+            raise OSError('journal_file_move_to_object returned %r' % r)
+        assert o.object.type == type
+        return o
+
+    def read_data(self, offset):
+        return self.read_object(offset, OBJECT_DATA).data
+
+    def read_field(self, offset):
+        return self.read_object(offset, OBJECT_FIELD).field
+
+    def read_entry(self, offset):
+        return self.read_object(offset, OBJECT_ENTRY).entry
 
     def _next_entry(self, dir):
         o = POINTER(journal_file.Object)()
@@ -143,6 +156,16 @@ class JournalHandle:
                                     byref(o), byref(self._entry_position))
         if r != 0:
             raise OSError('journal_file_next_entry returned %r' % r)
+        n = journal_file_entry_n_items(o)
+        entry = o.contents.entry
+        items_ptr = cast(entry.items, POINTER(EntryItem))
+        for i in range(n):
+            entry_item = items_ptr[i]
+            data_obj = self.read_data(entry_item.offset)
+            payload_ptr = cast(byref(data_obj.payload), ctypes.c_char_p)
+            dist = payload_ptr - cast(byref(data_obj), ctypes.c_char_p)
+            payload_size = data_obj.object.size - dist
+            payload = payload_ptr[0:payload_size].decode()
         return Entry.convert_object_ptr(o)
 
     def next_entry(self):
