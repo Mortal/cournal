@@ -68,14 +68,14 @@ def main():
     assert 1 == journal_file_next_entry_for_data(f, None, 0, p, DIRECTION_UP, byref(o), None)
     assert 3 == o.contents.entry.seqnum
 
-    assert 1 == journal_file_find_data_object(f, test2, len(test2), None, byref(p))
+    assert 1 == journal_file_find_data_object(f, String(test2), len(test2), None, byref(p))
     assert 1 == journal_file_next_entry_for_data(f, None, 0, p, DIRECTION_UP, byref(o), None)
     assert 2 == o.contents.entry.seqnum
 
     assert 1 == journal_file_next_entry_for_data(f, None, 0, p, DIRECTION_DOWN, byref(o), None)
     assert 2 == o.contents.entry.seqnum
 
-    assert not journal_file_find_data_object(f, "quux", 4, None, byref(p))
+    assert not journal_file_find_data_object(f, String("quux"), 4, None, byref(p))
 
     assert 1 == journal_file_move_to_entry_by_seqnum(f, 1, DIRECTION_DOWN, byref(o), None)
     assert 1 == o.contents.entry.seqnum
