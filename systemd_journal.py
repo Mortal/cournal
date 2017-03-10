@@ -231,8 +231,7 @@ def main():
     test2 = 'TEST2=2'
 
     journal = journal_open('test.journal', 'x+')
-    r = journal.append(test)
-    assert r == 1, r
+    assert journal.append(test) == 1
     assert journal.append(test2) == 2
     assert journal.append(test) == 3
     # if HAVE_GCRYPT: journal_file_append_tag(f)
