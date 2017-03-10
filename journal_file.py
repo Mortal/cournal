@@ -227,7 +227,7 @@ class String(MutableString, Union):
 
     def __init__(self, obj=""):
         if isinstance(obj, (str, UserString)):
-            self.data = obj.encode()
+            self.data = str(obj).encode()
         else:
             self.raw = obj
 
@@ -299,6 +299,11 @@ class _variadic_function(object):
             fixed_args.append(argtype.from_param(args[i]))
             i+=1
         return self.func(*fixed_args+list(args[i:]))
+
+
+def _c_divide(x, y):
+    # Simulate C division
+    return x // y if isinstance(x, int) and isinstance(y, int) else x / y
 
 # End preamble
 
@@ -938,7 +943,7 @@ struct_TagObject._fields_ = [
     ('object', ObjectHeader),
     ('seqnum', le64_t),
     ('epoch', le64_t),
-    ('tag', c_uint8 * (256 // 8)),
+    ('tag', c_uint8 * (_c_divide(256, 8))),
 ]
 
 union_Object.__slots__ = [
