@@ -885,15 +885,7 @@ struct_EntryItem._fields_ = [
     ('hash', le64_t),
 ]
 
-struct_EntryObject.__slots__ = [
-    'object',
-    'seqnum',
-    'realtime',
-    'monotonic',
-    'boot_id',
-    'xor_hash',
-    'items',
-]
+struct_EntryObject.__slots__ = [ 'object', 'seqnum', 'realtime', 'monotonic', 'boot_id', 'xor_hash', 'items', ]
 struct_EntryObject._fields_ = [
     ('object', ObjectHeader),
     ('seqnum', le64_t),
@@ -901,7 +893,7 @@ struct_EntryObject._fields_ = [
     ('monotonic', le64_t),
     ('boot_id', sd_id128_t),
     ('xor_hash', le64_t),
-    ('items', POINTER(EntryItem)),
+    ('items', EntryItem * 0),
 ]
 
 struct_HashItem.__slots__ = [
