@@ -5,6 +5,7 @@ from systemd_journal import journal_open
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--remove-unit')
+    parser.add_argument('--remove-boot')
     parser.add_argument('input')
     parser.add_argument('output')
     args = parser.parse_args()
@@ -14,6 +15,8 @@ def main():
     remove_items = []
     if args.remove_unit:
         remove_items.append('_SYSTEMD_UNIT=%s' % args.remove_unit)
+    if args.remove_boot:
+        remove_items.append('_BOOT_ID=%s' % args.remove_boot)
     remove_items = [i.encode() for i in remove_items]
     skipped = written = 0
     for e in fin:
