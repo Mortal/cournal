@@ -11,8 +11,9 @@ def main():
 
     fin = journal_open(args.input, 'r')
     fout = journal_open(args.output, 'x+')
-    remove_items = (['_SYSTEMD_UNIT=%s' % args.remove_unit]
-                    if args.remove_unit else [])
+    remove_items = []
+    if args.remove_unit:
+        remove_items.append('_SYSTEMD_UNIT=%s' % args.remove_unit)
     remove_items = [i.encode() for i in remove_items]
     skipped = written = 0
     for e in fin:
